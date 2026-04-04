@@ -63,14 +63,17 @@ RUN addgroup --system --gid 1001 nodejs && \
     adduser --system --uid 1001 nextjs
 
 # Next.js standalone app
-COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next/static ./apps/web/.next/static
+COPY --from=builder /app/apps/web/.next/standalone ./
+COPY --from=builder /app/apps/web/.next/static ./apps/web/.next/static
 
 # Minimal migration workspace (~200MB vs 3.5GB before)
-COPY --from=migrator --chown=nextjs:nodejs /migrate /migrate
+COPY --from=migrator /migrate /migrate
 
-COPY --chown=nextjs:nodejs --chmod=755 docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
-RUN sed -i 's/\r$//' /usr/local/bin/docker-entrypoint.sh
+# entrypoint
+COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+RUN sed -i 's/\r$//' /usr/local/bin/docker-entrypoint.sh && \
+    chmod 755 /usr/local/bin/docker-entrypoint.sh && \
+    chown -R nextjs:nodejs /app /migrate /usr/local/bin/docker-entrypoint.sh
 
 USER nextjs
 EXPOSE 3000
